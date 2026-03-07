@@ -37,11 +37,14 @@ Create/Update `.env` in the remote project root `~/openclaw/.env`:
 ---
 
 ## 📜 Installation Log (Remote)
-| Step | Action | Remote Command | Result |
-| :--- | :--- | :--- | :--- |
-| 1 | Install Node/pnpm | `brew install node pnpm` | Done |
-| 2 | Install PM2 | `npm install -g pm2` | Done |
-| 3 | Install dependencies | `pnpm install` | Pending |
+| Step | Action | Remote Command | Result | Rollback Command |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | Install Node/pnpm | `brew install node pnpm` | Done | `brew uninstall node pnpm` |
+| 2 | Install PM2 | `npm install -g pm2` | Done | `npm uninstall -g pm2` |
+| 3 | Install dependencies | `pnpm install` | Done | `rm -rf ~/openclaw/node_modules` |
+| 4 | Build project | `pnpm build` | Done | `rm -rf ~/openclaw/dist` |
+| 5 | Create .env | `echo ... > .env` | Done | `rm ~/openclaw/.env` |
+| 6 | Create Workspace | `mkdir -p /Users/max/projects` | Done | `rmdir /Users/max/projects` |
 
 ---
 
