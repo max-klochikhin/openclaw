@@ -68,6 +68,10 @@ To completely remove OpenClaw from your Mac mini:
 3. **Remove Project**: `ssh ... "rm -rf ~/openclaw"` (WARNING: backup .env if needed)
 4. **Remove Dependencies**: `ssh ... "npm uninstall -g pm2 && brew uninstall node pnpm"` (If you want to remove tools too)
 
-## 📎 Links and Commands
+## � Future Ideas / Backlog
+- **Direct Antigravity CLI**: Install and use Antigravity CLI directly on the Mac mini to manage the project without local SSH overhead.
+- **Enhanced Remote Dev**: Fully configure the remote environment for direct development (IDE, terminal optimizations).
+
+## �📎 Links and Commands
 - **SSH Command**: 
   `ssh -p 2022 -i /Users/max.klochikhin/projects/kleinanzeigen-bot/tools/virtual_machines/mac_mini/ssh-keys/id_ed25519_macmini Max@crazy-home.keenetic.name`
