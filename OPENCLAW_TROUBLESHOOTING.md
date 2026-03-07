@@ -134,6 +134,22 @@ Added `WorkingDirectory` to `/Users/max/Library/LaunchAgents/ai.openclaw.gateway
 
 ---
 
+## Issue 5: Gemini API limits reached — Shared account interference
+
+### Symptom
+OpenClaw was frequently hitting Gemini API rate limits (RPM/TPM) because the API key was shared with another system.
+
+### Root Cause
+Google AI Studio enforces free-tier limits per account. Using one key for multiple active systems caused them to compete for the same 15 RPM / 1500 RPD budget.
+
+### Fix Applied (2026-03-07)
+1. **Created Dedicated Account**: Logged into a new Google account (`avneet.everett.2021@gmail.com`).
+2. **Generated New API Key**: Created a fresh key in AI Studio.
+3. **Verified Key**: Verified the key works via a standalone `curl` request to the Gemini API.
+4. **Isolated Config**: Updated the `GEMINI_API_KEY` in `/Users/max/openclaw/.env`. This decouples OpenClaw from the other system's limits.
+
+---
+
 ## Final State (as of 2026-03-07)
 
 | Component | Value |
@@ -142,6 +158,7 @@ Added `WorkingDirectory` to `/Users/max/Library/LaunchAgents/ai.openclaw.gateway
 | Gateway port | `18789` |
 | Bot username | `@open_claw_ai_assistant_bot` |
 | Agent model | `google/gemini-flash-latest` |
+| Gemini API Key | `AIzaSyD-CLw... (Dedicated Account)` |
 | Config file | `/Users/max/.openclaw/openclaw.json` |
 | Plist file | `/Users/max/Library/LaunchAgents/ai.openclaw.gateway.plist` |
 | Logs (stdout) | `/Users/max/.openclaw/logs/gateway.log` |
