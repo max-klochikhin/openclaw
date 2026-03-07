@@ -20,7 +20,8 @@ This document serves as the source of truth for the deployment process ON THE RE
 OpenClaw primarily uses `~/.openclaw/openclaw.json` for configuration.
 1. **Wizard/Doctor**: Run `pnpm start setup` and `pnpm start doctor --fix` to initialize.
 2. **Telegram Auth**: Set allowed user: `pnpm start config set channels.telegram.allowFrom "[135208609]"`
-3. **LLM Provider (BLOCKER)**: Need to correctly set the Gemini API key. Tried `providers.google_ai` and `providers.google`, but they were unrecognized.
+3. **LLM Provider (DONE)**: Switched to `GEMINI_API_KEY` in `.env`. Set default model to `google/gemini-flash-latest`.
+   - Command: `pnpm start models set google/gemini-flash-latest`
 
 ### Step 3: Remote Installation (DONE)
 1. Install dependencies: `pnpm install`
@@ -49,13 +50,14 @@ OpenClaw primarily uses `~/.openclaw/openclaw.json` for configuration.
 | 8 | Fix Doctor Issues | `pnpm start doctor --fix` | Done | N/A |
 | 9 | Set Telegram Access | `pnpm start config set ...` | Done | Reset config |
 | 10 | Install Daemon | `pnpm start daemon install` | Done | `launchctl unload ...` |
-| 11 | Gemini Config | `models auth paste-token` | **FAILED** | Unrecognized keys |
+| 11 | Gemini Config | `models set google/gemini-flash-latest` | Done | Reset models |
+| 12 | Antigravity.app | Copy to /Applications | Done | `rm -rf /Applications/Antigravity.app` |
 
 ---
 
 ## 🛠 Troubleshooting & Notes
-- **Config Locaton**: Settings are in `~/.openclaw/openclaw.json`, not just `.env`.
-- **Gemini Issue**: Attempted multiple paths (`providers.google_ai`, `providers.google`) via `config set`. CLI returned "Unrecognized key".
+- **Config Locaton**: Settings are in `~/.openclaw/openclaw.json`, but LLM API keys can be loaded from `.env` using standard names like `GEMINI_API_KEY`.
+- **Gemini Switch**: The key used was `GEMINI_API_KEY` (renamed from `GOOGLE_AI_API_KEY`).
 - **Interactivity**: `models auth add/paste-token` is interactive, making it hard to automate via one-liner SSH.
 - **Next Idea**: Manually edit `~/.openclaw/openclaw.json` or find the correct `providerId` for Google AI.
 
