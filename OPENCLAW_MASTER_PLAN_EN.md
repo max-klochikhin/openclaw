@@ -6,8 +6,10 @@ This document serves as the source of truth for the deployment process ON THE RE
 - **Remote Host**: Mac mini (Apple Silicon) at `crazy-home.keenetic.name:2022`
 - **User**: `Max`
 - **Remote Project Path**: `/Users/max/openclaw`
+- **Telegram User ID**: `1297932849` (Numeric ID from @userinfobot)
+- **Kleinanzeigen ID**: `135208609` (Used only for website-related tasks, NOT Telegram auth)
 - **GitHub**: [max-klochikhin/openclaw](https://github.com/max-klochikhin/openclaw)
-- **Local Proxy folder**: `/Users/max.klochikhin/projects/openclaw` (Used only for documentation and plan tracking).
+- **Local Proxy folder**: `/Users/max.klochikhin/projects/openclaw` (Documentation and tracking).
 
 ## 📋 Implementation Roadmap
 
@@ -19,9 +21,13 @@ This document serves as the source of truth for the deployment process ON THE RE
 ### Step 2: Configuration (IN PROGRESS)
 OpenClaw primarily uses `~/.openclaw/openclaw.json` for configuration.
 1. **Wizard/Doctor**: Run `pnpm start setup` and `pnpm start doctor --fix` to initialize.
-2. **Telegram Auth**: Set allowed user: `pnpm start config set channels.telegram.allowFrom "[135208609]"`
-3. **LLM Provider (DONE)**: Switched to `GEMINI_API_KEY` in `.env`. Set default model to `google/gemini-flash-latest`.
-   - Command: `pnpm start models set google/gemini-flash-latest`
+2. **Telegram Auth (DONE)**:
+   - Config path: `channels.telegram.allowFrom`
+   - Command: `pnpm start config set channels.telegram.allowFrom "[1297932849]"` (Correct Telegram ID).
+3. **LLM Provider (DONE)**:
+   - Env var: `GEMINI_API_KEY` (renamed from `GOOGLE_AI_API_KEY`).
+   - Default model: `google/gemini-flash-latest`.
+   - Command: `pnpm start models set google/gemini-flash-latest`.
 
 ### Step 3: Remote Installation (DONE)
 1. Install dependencies: `pnpm install`
@@ -52,6 +58,8 @@ OpenClaw primarily uses `~/.openclaw/openclaw.json` for configuration.
 | 10 | Install Daemon | `pnpm start daemon install` | Done | `launchctl unload ...` |
 | 11 | Gemini Config | `models set google/gemini-flash-latest` | Done | Reset models |
 | 12 | Antigravity.app | Copy to /Applications | Done | `rm -rf /Applications/Antigravity.app` |
+| 13 | Correct Telegram ID | Set ID `1297932849` | Done | Back to `135208609` |
+| 14 | Verify Bot Connection | Send "test" message | Done | N/A |
 
 ---
 
