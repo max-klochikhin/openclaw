@@ -69,6 +69,7 @@ OpenClaw primarily uses `~/.openclaw/openclaw.json` for configuration.
 - **Config Locaton**: Settings are in `~/.openclaw/openclaw.json`, but LLM API keys can be loaded from `.env` using standard names like `GEMINI_API_KEY`.
 - **Gemini Switch**: The key used was `GEMINI_API_KEY` (renamed from `GOOGLE_AI_API_KEY`).
 - **Interactivity**: `models auth add/paste-token` is interactive, making it hard to automate via one-liner SSH.
+- **Daemon Key Persistence**: When using the native daemon (`pnpm start daemon install`), environment variables (like `GEMINI_API_KEY`) are copied into the `.plist` file. If you update keys in `.env`, you **MUST** run `pnpm start daemon uninstall` and then `pnpm start daemon install` to refresh the system service.
 - **Next Idea**: Manually edit `~/.openclaw/openclaw.json` or find the correct `providerId` for Google AI.
 
 ---
