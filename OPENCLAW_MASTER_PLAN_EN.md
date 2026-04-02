@@ -9,6 +9,8 @@ This document serves as the source of truth for the deployment process ON THE RE
 - **Telegram User ID**: `1297932849` (Numeric ID from @userinfobot)
 - **Kleinanzeigen ID**: `135208609` (Used only for website-related tasks, NOT Telegram auth)
 - **GitHub**: [max-klochikhin/openclaw](https://github.com/max-klochikhin/openclaw)
+- **Gemini API Level**: Tier 2 (Upgraded/Active)
+- **Gemini Key**: `AIzaSyD...Gqsb46xLGRDDA` (Last confirmed active April 2026)
 - **Local Proxy folder**: `/Users/max.klochikhin/projects/openclaw` (Documentation and tracking).
 
 ## 📋 Implementation Roadmap
@@ -18,7 +20,7 @@ This document serves as the source of truth for the deployment process ON THE RE
 2. **PM2**: Installed globally via npm on Mac mini.
 3. **pnpm**: Installed via brew on Mac mini.
 
-### Step 2: Configuration (IN PROGRESS)
+### Step 2: Configuration (DONE)
 OpenClaw primarily uses `~/.openclaw/openclaw.json` for configuration.
 1. **Wizard/Doctor**: Run `pnpm start setup` and `pnpm start doctor --fix` to initialize.
 2. **Telegram Auth (DONE)**:
