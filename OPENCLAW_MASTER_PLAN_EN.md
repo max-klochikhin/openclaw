@@ -62,7 +62,6 @@ OpenClaw primarily uses `~/.openclaw/openclaw.json` for configuration.
 | 12 | Antigravity.app | Copy to /Applications | Done | `rm -rf /Applications/Antigravity.app` |
 | 13 | Correct Telegram ID | Set ID `1297932849` | Done | Back to `135208609` |
 | 14 | Verify Bot Connection | Send "test" message | Done | N/A |
-| 15 | Double Commander | `brew install --cask double-commander` | Done | `brew uninstall --cask double-commander` |
 
 ---
 
