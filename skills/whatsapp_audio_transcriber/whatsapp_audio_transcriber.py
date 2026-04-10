@@ -1,6 +1,6 @@
 #!/opt/homebrew/bin/python3.11
 """
-Alfred v6.0 — WhatsApp audio transcriber (Vertex AI) + Localized Headers
+Alfred v6.1 — WhatsApp audio transcriber (Vertex AI) + Localized Headers + Sender Name
 Monitors incoming WhatsApp voice messages, transcribes via Gemini on Vertex AI, sends reply.
 """
 import os
@@ -19,6 +19,8 @@ STATE_FILE = os.path.expanduser("~/.openclaw/workspace/monitor_v6_state.json")
 LOG_FILE   = os.path.expanduser("~/.openclaw/workspace/wa_monitor_v5.log")
 POLL_SEC   = 45
 SYNC_TIMEOUT = 50
+
+NAME_CACHE = {} # Cache for JID -> Name
 
 os.makedirs(TMP_DIR, exist_ok=True)
 
@@ -97,8 +99,34 @@ async def transcribe(file_path: str) -> dict | None:
         log(f"❌ Transcription error (Vertex AI): {e}")
         return None
 
+async def get_sender_name(sender_id: str, chat_name: str, group: bool, from_me: bool) -> str:
+    if sender_id in NAME_CACHE:
+        return NAME_CACHE[sender_id]
+
+    # Try search for everyone including me
+    rc, stdout, _ = await run(f"{WACLI} contacts search '{sender_id}' --json", timeout=10)
+    if rc == 0:
+        try:
+            data = json.loads(stdout)
+            contacts = data.get("data", [])
+            if contacts:
+                name = contacts[0].get("Name") or contacts[0].get("Alias")
+                if name:
+                    NAME_CACHE[sender_id] = name
+                    return name
+        except:
+            pass
+    
+    if from_me:
+        return "Max Klochikhin"
+    
+    if not group and chat_name:
+        return chat_name
+    
+    return sender_id.split("@")[0]
+
 async def main():
-    log(f"🚀 Alfred v6.0 (Vertex AI mode with Audio Language Localization) | Project: gen-lang-client-0431347096")
+    log(f"🚀 Alfred v6.1 (Vertex AI mode with Sender Identity) | Project: gen-lang-client-0431347096")
 
     state = load_state()
     log(f"📋 Already processed: {len(state['processed'])} message(s)")
@@ -119,7 +147,9 @@ async def main():
             log("❌ Invalid --start-time format. Use HH:MM. Falling back to 00:00.")
             today_start_berlin = now_berlin.replace(hour=0, minute=0, second=0, microsecond=0)
     else:
+        # Default start from midnight today
         today_start_berlin = now_berlin.replace(hour=0, minute=0, second=0, microsecond=0)
+
     today_start_utc = today_start_berlin.astimezone(timezone.utc)
     log(f"⏰ Filter: messages after {today_start_berlin.strftime('%H:%M')} Berlin ({today_start_utc.strftime('%H:%M')} UTC)")
 
@@ -145,6 +175,8 @@ async def main():
                 m_id = msg.get("MsgID", "")
                 chat = msg.get("ChatJID", "")
                 ts_raw = msg.get("Timestamp", "")
+                from_me = msg.get("FromMe", False)
+                sender_id = msg.get("SenderJID") or chat
 
                 if not m_id or m_id in state["processed"]:
                     continue
@@ -186,15 +218,18 @@ async def main():
 
                 date_str = m_ts.astimezone(berlin).strftime("%d.%m.%Y")
                 time_str = m_ts.astimezone(berlin).strftime("%H:%M")
+                
+                # Fetch Name
+                name = await get_sender_name(sender_id, msg.get("ChatName", ""), chat.endswith("@g.us"), from_me)
 
                 headers = {
-                    "ru": f"🔊 Аудио от {date_str} в {time_str}:",
-                    "en": f"🔊 Audio from {date_str} at {time_str}:",
-                    "de": f"🔊 Audio vom {date_str} um {time_str}:",
-                    "es": f"🔊 Audio del {date_str} a las {time_str}:",
-                    "fr": f"🔊 Audio du {date_str} à {time_str}:",
-                    "uk": f"🔊 Аудіо від {date_str} о {time_str}:",
-                    "tr": f"🔊 {date_str} saat {time_str} ses kaydı:"
+                    "ru": f"🔊 Аудио от {name} ({date_str} в {time_str}):",
+                    "en": f"🔊 Audio from {name} ({date_str} at {time_str}):",
+                    "de": f"🔊 Audio von {name} ({date_str} um {time_str}):",
+                    "es": f"🔊 Audio de {name} ({date_str} a las {time_str}):",
+                    "fr": f"🔊 Audio de {name} ({date_str} à {time_str}):",
+                    "uk": f"🔊 Аудіо від {name} ({date_str} о {time_str}):",
+                    "tr": f"🔊 {name} tarafından {date_str} saat {time_str} ses kaydı:"
                 }
 
                 header = headers.get(lang.split('-')[0], headers["ru"])

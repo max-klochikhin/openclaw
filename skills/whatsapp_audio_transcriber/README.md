@@ -1,12 +1,13 @@
 # WhatsApp Audio Transcriber Skill
 
-This skill is designed as an autonomous background script that hooks into a WhatsApp CLI (`wacli`) to fetch new incoming audio messages, transcribes them via **Google Vertex AI** (`gemini-3-flash-preview`), and automatically replies in the WhatsApp chat with the transcribed text.
+This skill is an autonomous background script that hooks into a WhatsApp CLI (`wacli`) to fetch new incoming audio messages, transcribes them via **Google Vertex AI** (`gemini-3-flash-preview`), and automatically replies in the WhatsApp chat with the transcribed text.
 
 ## Features
 - **Asynchronous WhatsApp Sync**: Communicates natively with WhatsApp via the standard bridge `wacli`.
 - **Intelligent Speech-to-Text**: Utilizes the Google Vertex AI SDK to send the raw binary audio (`.ogg`) and receive a highly accurate, word-for-word transcript.
 - **Auto-Localization**: Gemini detects the language spoken in the audio and automatically adjusts the metadata header of the transcript (e.g. `🔊 Audio from...` or `🔊 Аудио от...`) to match the context.
-- **Duplication Safe**: Keeps internal memory of completed tasks (`monitor_v5_state.json`) so it doesn't process the same message twice, even after restarts.
+- **Sender Identity**: Automatically identifies the sender name (even in groups) to provide context in the reply.
+- **Duplication Safe**: Keeps internal memory of completed tasks (`monitor_v6_state.json`) so it doesn't process the same message twice, even after restarts.
 
 ## Prerequisites
 - **wacli**: Requires `~/go/bin/wacli` correctly authenticated with an active WhatsApp instance.
@@ -23,9 +24,18 @@ The daemon configuration is stored in `~/Library/LaunchAgents/com.openclaw.whats
 launchctl load -w ~/Library/LaunchAgents/com.openclaw.whatsapp-transcriber.plist
 ```
 
+**To reload the daemon (after updates):**
+```bash
+launchctl unload ~/Library/LaunchAgents/com.openclaw.whatsapp-transcriber.plist
+launchctl load -w ~/Library/LaunchAgents/com.openclaw.whatsapp-transcriber.plist
+```
+
+**Logs:**
+Output and errors are routed natively to: `/Users/max/.openclaw/workspace/wa_monitor_v6.log`
+
 **Custom Start Time:**
-By default, the script starts processing messages from 00:00 (midnight) of the current day. It skips already processed messages using `monitor_v5_state.json`. 
-If you want to forcibly transcribe from a specific time today (or skip older ones), you can manually run the script passing the `start-time` flag:
+By default, the script starts processing messages from 00:00 (midnight) of the current day. It skips already processed messages using `monitor_v6_state.json`. 
+If you want to forcibly transcribe from a specific time today (or skip older ones), you can manually run the script passing the `--start-time` flag:
 ```bash
 /opt/homebrew/bin/python3.11 whatsapp_audio_transcriber.py --start-time 11:14
 ```
