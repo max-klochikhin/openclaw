@@ -156,7 +156,12 @@ async def main():
     while True:
         try:
             log("─── Sync ───")
-            await run(f"{WACLI} sync --timeout 40s", timeout=60)
+            # --once is required: default `wacli sync` uses --follow and never exits,
+            # which holds ~/.wacli/LOCK indefinitely and breaks all other wacli commands.
+            await run(
+                f"{WACLI} sync --once --download-media --idle-exit 45s --timeout 10m",
+                timeout=180,
+            )
 
             rc, stdout, _ = await run(
                 f'{WACLI} messages search "audio" --limit 30 --json', timeout=30

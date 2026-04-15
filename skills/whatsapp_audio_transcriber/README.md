@@ -19,6 +19,10 @@ This tool is deployed as a native macOS daemon (`launchd`). It is designed to ru
 
 The daemon configuration is stored in `~/Library/LaunchAgents/com.openclaw.whatsapp-transcriber.plist`.
 
+**Do not run a second copy via cron** (for example `run_wa_monitor.sh` every minute). A duplicate process will call `wacli` in parallel, hit `store is locked`, or leave `wacli sync` running forever (default `--follow`) and block `~/.wacli/LOCK`. Use **only** this LaunchAgent; deploy updates by editing `wa_monitor_v6.py` (or syncing from this skill) and reloading the plist.
+
+The script calls `wacli sync --once ...` so each sync exits and releases the store lock.
+
 **To load and start the daemon:**
 ```bash
 launchctl load -w ~/Library/LaunchAgents/com.openclaw.whatsapp-transcriber.plist
