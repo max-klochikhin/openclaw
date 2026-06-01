@@ -1,26 +1,46 @@
 #!/opt/homebrew/bin/python3.11
 """
-Alfred v6.1 — WhatsApp audio transcriber (Vertex AI) + Localized Headers + Sender Name
+Alfred v6.2 — WhatsApp audio transcriber (Vertex AI) + Localized Headers + Sender Name
 Monitors incoming WhatsApp voice messages, transcribes via Gemini on Vertex AI, sends reply.
+
+Environment variables (override defaults):
+  GCLOUD_CREDENTIALS  — path to gcloud service account JSON
+  WACLI_BIN           — path to wacli binary
+  GCP_PROJECT         — Google Cloud project ID
 """
 import os
+import sys
 import json
 import asyncio
 from datetime import datetime, timezone, timedelta
 
 # ──────────────────── CONFIG ───────────────────────────────────────────────
 
-os.environ["GOOGLE_CLOUD_PROJECT"] = "gen-lang-client-0431347096"
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "/Users/max/kleinanzeigen_bot/tools/telegram_llm_bot/config/gcloud_credentials.json"
+GCP_PROJECT = os.environ.get("GCP_PROJECT", "gen-lang-client-0431347096")
 
-WACLI      = os.path.expanduser("~/go/bin/wacli")
+# Credentials: env var → machine-specific defaults
+_HOME = os.path.expanduser("~")
+_CREDS_CANDIDATES = [
+    os.environ.get("GCLOUD_CREDENTIALS", ""),
+    os.path.join(_HOME, "kleinanzeigen_bot/tools/telegram_llm_bot/config/gcloud_credentials.json"),
+    os.path.join(_HOME, ".config/gcloud/application_default_credentials.json"),
+]
+GCLOUD_CREDENTIALS = next((p for p in _CREDS_CANDIDATES if p and os.path.exists(p)), None)
+if GCLOUD_CREDENTIALS:
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = GCLOUD_CREDENTIALS
+os.environ["GOOGLE_CLOUD_PROJECT"] = GCP_PROJECT
+
+WACLI      = os.environ.get("WACLI_BIN", os.path.expanduser("~/go/bin/wacli"))
 TMP_DIR    = os.path.expanduser("~/.openclaw/workspace/downloads/monitor_v5")
 STATE_FILE = os.path.expanduser("~/.openclaw/workspace/monitor_v6_state.json")
 LOG_FILE   = os.path.expanduser("~/.openclaw/workspace/wa_monitor_v5.log")
 POLL_SEC   = 45
 SYNC_TIMEOUT = 50
 
-NAME_CACHE = {} # Cache for JID -> Name
+# Gemini model — gemini-2.0-flash is the stable fast model for Vertex AI
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+
+NAME_CACHE = {}  # Cache for JID -> Name
 
 os.makedirs(TMP_DIR, exist_ok=True)
 
@@ -73,16 +93,17 @@ async def transcribe(file_path: str) -> dict | None:
 
         client = genai.Client(
             vertexai=True,
-            project="gen-lang-client-0431347096",
-            location="global"
+            project=GCP_PROJECT,
+            location="us-central1"
         )
         with open(file_path, "rb") as f:
             audio_bytes = f.read()
 
+        log(f"🤖 Using model: {GEMINI_MODEL}")
         response = await asyncio.get_event_loop().run_in_executor(
             None,
             lambda: client.models.generate_content(
-                model="gemini-3-flash-preview",
+                model=GEMINI_MODEL,
                 contents=[
                     gt.Part.from_bytes(data=audio_bytes, mime_type="audio/ogg"),
                     "Transcribe the following WhatsApp audio message word-for-word exactly as spoken. "
@@ -94,7 +115,11 @@ async def transcribe(file_path: str) -> dict | None:
                 )
             ),
         )
-        return json.loads(response.text.strip())
+        raw = response.text.strip()
+        # Strip markdown code fences if model wraps JSON in ```json ... ```
+        if raw.startswith("```"):
+            raw = raw.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
+        return json.loads(raw)
     except Exception as e:
         log(f"❌ Transcription error (Vertex AI): {e}")
         return None
@@ -126,7 +151,19 @@ async def get_sender_name(sender_id: str, chat_name: str, group: bool, from_me: 
     return sender_id.split("@")[0]
 
 async def main():
-    log(f"🚀 Alfred v6.1 (Vertex AI mode with Sender Identity) | Project: gen-lang-client-0431347096")
+    log(f"🚀 Alfred v6.2 (Vertex AI mode with Sender Identity) | Project: {GCP_PROJECT}")
+    log(f"🐍 Python: {sys.version.split()[0]} | Model: {GEMINI_MODEL}")
+    log(f"📂 wacli: {WACLI} — {'✅ found' if os.path.exists(WACLI) else '❌ NOT FOUND'}")
+    log(f"🔑 Creds: {GCLOUD_CREDENTIALS or '❌ NOT FOUND — set GCLOUD_CREDENTIALS env var'}")
+
+    if not os.path.exists(WACLI):
+        log("💥 wacli binary missing. Install via: go install github.com/igolaizola/wacli@latest")
+        log("   Or set WACLI_BIN env var to the correct path.")
+        sys.exit(1)
+
+    if not GCLOUD_CREDENTIALS:
+        log("💥 No GCloud credentials found. Set GCLOUD_CREDENTIALS=/path/to/key.json")
+        sys.exit(1)
 
     state = load_state()
     log(f"📋 Already processed: {len(state['processed'])} message(s)")
@@ -136,8 +173,15 @@ async def main():
     parser.add_argument("--start-time", type=str, help="Start time in HH:MM format (Berlin time)")
     args = parser.parse_args()
 
-    berlin = timezone(timedelta(hours=2))
-    now_berlin = datetime.now(berlin)
+    # Use zoneinfo for proper DST-aware Berlin time (CET/CEST)
+    try:
+        from zoneinfo import ZoneInfo
+        berlin = ZoneInfo("Europe/Berlin")
+        now_berlin = datetime.now(berlin)
+    except ImportError:
+        # Fallback: approximate with fixed offset (no DST correction)
+        berlin = timezone(timedelta(hours=2))
+        now_berlin = datetime.now(berlin)
     
     if args.start_time:
         try:
