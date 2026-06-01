@@ -37,8 +37,8 @@ LOG_FILE   = os.path.expanduser("~/.openclaw/workspace/wa_monitor_v5.log")
 POLL_SEC   = 45
 SYNC_TIMEOUT = 50
 
-# Gemini model — gemini-2.0-flash is the stable fast model for Vertex AI
-GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-2.0-flash")
+# Gemini model — gemini-3-flash-preview is the preview model for Vertex AI
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-3-flash-preview")
 
 NAME_CACHE = {}  # Cache for JID -> Name
 
@@ -94,7 +94,7 @@ async def transcribe(file_path: str) -> dict | None:
         client = genai.Client(
             vertexai=True,
             project=GCP_PROJECT,
-            location="us-central1"
+            location="global"
         )
         with open(file_path, "rb") as f:
             audio_bytes = f.read()
@@ -247,8 +247,6 @@ async def main():
                 )
                 if dl_rc != 0 or not os.path.exists(audio_path):
                     log(f"❌ Download failed: {dl_err[:80]}")
-                    state["processed"].append(m_id)
-                    save_state(state)
                     continue
 
                 log(f"🎙️  Transcribing using Vertex AI...")
