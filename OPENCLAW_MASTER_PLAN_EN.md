@@ -67,8 +67,8 @@ OpenClaw primarily uses `~/.openclaw/openclaw.json` for configuration.
 
 ## 🛠 Troubleshooting & Notes
 - **Agent-Specific Auth Profiles**: Each agent (e.g. `main`) can have its own auth store at `~/.openclaw/agents/<id>/agent/auth-profiles.json`. This **overrides** both global `.env` and `openclaw.json` settings. If you get a "No API key found" or "invalid key" error for a specific agent, check and update this JSON file.
-- **Daemon Key Persistence**: When using the native daemon (`pnpm start daemon install`), environment variables (like `GEMINI_API_KEY`) are copied into the `.plist` file. If you update keys in `.env`, you **MUST** run `pnpm start daemon uninstall` and then `pnpm start daemon install` to refresh the system service.
-- **Next Idea**: Manually edit `~/.openclaw/openclaw.json` or find the correct `providerId` for Google AI.
+- **Vertex AI Project Migration**: The active Vertex AI project on the Mac mini is `project-f52e50a4-bf6b-4fb8-aff` (shared with the Kleinanzeigen bot). Both systems now share the same quota and authorization credentials.
+- **Node.js OAuth Requirement**: When using standard OAuth credentials (`authorized_user` type), the Node.js `google-auth-library` strictly requires the `"token_uri": "https://oauth2.googleapis.com/token"` key to be present in `gcloud_credentials.json`. Without it, token refresh will crash with `Cannot convert undefined or null to object`.
 
 ---
 
